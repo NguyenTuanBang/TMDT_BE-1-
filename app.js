@@ -24,7 +24,7 @@ const app = express();
 
 // Cấu hình CORS
 const allowedOrigins = [
-  "https://tmdt-fe-1.onrender.com",
+  "https://tmdt-fe-1.vercel.app",
   "http://localhost:5173"
 ];
 app.use(
