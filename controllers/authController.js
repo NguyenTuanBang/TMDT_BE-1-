@@ -352,15 +352,16 @@ import AuditLogModel from "../models/AuditLogModel.js";
 
 const createSendToken = (user, message, statusCode, res) => {
   const token = signToken(user._id);
-  console.log(token)
+
+  const isProduction = process.env.NODE_ENV === "production";
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "Lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: isProduction, // ✅ chỉ bật secure khi deploy
+    sameSite: isProduction ? "None" : "Lax", // ✅ cần None khi FE/BE khác domain
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
   });
-  console.log("3")
+
   res.status(statusCode).json({
     status: "success",
     message,
@@ -429,8 +430,8 @@ const authController = {
       entity_type: "User",
       action: "create",
       changes: [],
-      performedBy: user._id
-    })
+      performedBy: user._id,
+    });
     await TempUser.deleteOne({ _id: tempUser._id });
 
     createSendToken(user, "Đăng ký tài khoản thành công", 200, res);
@@ -438,26 +439,25 @@ const authController = {
 
   login: catchAsync(async (req, res, next) => {
     const { username, password } = req.body;
-    console.log(username)
+    console.log(username);
     if (!username || !password) {
       return next(new AppError("Vui lòng nhập email và mật khẩu", 400));
     }
-    console.log(password)
-    
+    console.log(password);
 
     const user = await User.findOne({ username }).select("+password");
-    console.log(user)
+    console.log(user);
 
     if (!user) {
       return next(new AppError("Tên đăng nhập hoặc mật khẩu không đúng", 401));
     }
-    console.log("1")
+    console.log("1");
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch)
+    console.log(isMatch);
     if (!isMatch) {
       return next(new AppError("Tên đăng nhập hoặc mật khẩu không đúng", 401));
     }
-    console.log("2")
+    console.log("2");
     createSendToken(user, "Đăng nhập thành công", 200, res);
   }),
 
@@ -552,7 +552,9 @@ const authController = {
     const user = await User.findOne({ email });
 
     if (!user || !user.otpReset)
-      return next(new AppError("User không tồn tại hoặc chưa yêu cầu OTP", 404));
+      return next(
+        new AppError("User không tồn tại hoặc chưa yêu cầu OTP", 404)
+      );
 
     if (user.otpReset.expiresAt < Date.now())
       return next(new AppError("OTP đã hết hạn", 400));
@@ -597,10 +599,12 @@ const authController = {
   }),
 
   logout: catchAsync(async (req, res, next) => {
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.clearCookie("jwt", {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
     });
 
     res.status(200).json({
@@ -616,7 +620,8 @@ const authController = {
     if (!user) return next(new AppError("Người dùng không tồn tại", 404));
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return next(new AppError("Mật khẩu hiện tại không đúng", 401));
+    if (!isMatch)
+      return next(new AppError("Mật khẩu hiện tại không đúng", 401));
 
     res.status(200).json({
       status: "success",
@@ -665,16 +670,16 @@ const authController = {
     req.user = currentUser;
     next();
   }),
-  restrictTo : ((...roles) => {
+  restrictTo: (...roles) => {
     return (req, res, next) => {
       if (!roles.includes(req.user.role)) {
         return next(
-        new AppError("Bạn không có quyền truy cập tài nguyên này", 403)
-      );
-    }
-    next();
-    }
-  })
+          new AppError("Bạn không có quyền truy cập tài nguyên này", 403)
+        );
+      }
+      next();
+    };
+  },
 };
 
 export default authController;

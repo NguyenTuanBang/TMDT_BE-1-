@@ -22,27 +22,23 @@ const app = express();
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 
-// Cấu hình CORS
-const allowedOrigins = [
-  "https://tmdt-fe-1.vercel.app",
-  "http://localhost:5173"
-];
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: [
+      "https://tmdt-fe-1.vercel.app",
+      "http://localhost:5173"
+    ],
     credentials: true,
   })
 );
 
+
 // Middleware đọc JSON & cookie
 app.use(express.json());
 app.use(cookieParser());
+
+
 
 // Routes
 app.use("/api/users", userRouter);
