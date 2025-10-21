@@ -6,6 +6,7 @@ import OrderModel from "../models/OrderModel.js";
 import OrderStoreModel from "../models/OrderStoreModel.js";
 import AuditLogModel from "../models/AuditLogModel.js";
 import ProductVariantsModel from "../models/product_variantsModel.js";
+import ProductModel from "../models/ProductModel.js";
 
 const OrderController = {
   createOrder: async (req, res) => {
@@ -61,7 +62,7 @@ const OrderController = {
               const cartItem = await CartItemModel.findById(item._id)
               const variant = await ProductVariantsModel.findById(item.variant_id)
               variant.quantity = Math.max(0, variant.quantity - item.quantity)
-              const product = await productModel.findById(variant.product_id)
+              const product = await ProductModel.findById(variant.product_id)
               product.tradedCount = (product.tradedCount || 0) + item.quantity
               await product.save()
               await variant.save()
