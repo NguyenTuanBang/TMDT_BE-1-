@@ -60,7 +60,10 @@ const OrderController = {
               });
               const cartItem = await CartItemModel.findById(item._id)
               const variant = await ProductVariantsModel.findById(item.variant_id)
-              variant.stock_quantity = Math.max(0, variant.stock_quantity - item.quantity)
+              variant.quantity = Math.max(0, variant.quantity - item.quantity)
+              const product = await productModel.findById(variant.product_id)
+              product.tradedCount = (product.tradedCount || 0) + item.quantity
+              await product.save()
               await variant.save();
               await cartItem.deleteOne()
             })
