@@ -5,6 +5,7 @@ import OrderItemModel from "../models/OrderItemModel.js";
 import OrderModel from "../models/OrderModel.js";
 import OrderStoreModel from "../models/OrderStoreModel.js";
 import AuditLogModel from "../models/AuditLogModel.js";
+import ProductVariantsModel from "../models/product_variantsModel.js";
 
 const OrderController = {
   createOrder: async (req, res) => {
@@ -25,6 +26,11 @@ const OrderController = {
         })
       );
 
+      const validStores = storeItems.filter(({ items }) => items.length > 0);
+      if (validStores.length === 0) {
+        return res.status(400).send({ message: "No items selected for order" });
+      }
+
       const order = await OrderModel.create({
         contact: address,
         total_amount: cart.subTotal,
@@ -32,27 +38,30 @@ const OrderController = {
         promotion: cart.promotion,
         shippingFee: cart.shippingFee,
       });
-      console.log(storeItems);
+      // console.log(storeItems);
       await Promise.all(
-        storeItems.map(async (orders) => {
-          const storeOder = await OrderStoreModel.create({
+        validStores.map(async ({store, items}) => {         
+          const storeOrder = await OrderStoreModel.create({
             order_id: order._id,
-            store: orders.store.store_id,
-            promotion: orders.store.promotion,
-            shippingFee: orders.store.shippingFee,
-            subTotal: orders.store.subTotal,
-            finalTotal: orders.store.finalTotal,
+            store: store.store_id,
+            promotion: store.promotion,
+            shippingFee: store.shippingFee,
+            subTotal: store.subTotal,
+            finalTotal: store.finalTotal,
           });
           await Promise.all(
-            orders.items.map(async (item) => {
+            items.map(async (item) => {
               await OrderItemModel.create({
-                storeOrder: storeOder._id,
+                storeOrder: storeOrder._id,
                 variant_id: item.variant_id,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 finalPrice: item.finalPrice,
               });
               const cartItem = await CartItemModel.findById(item._id)
+              const variant = await ProductVariantsModel.findById(item.variant_id)
+              variant.stock_quantity = Math.max(0, variant.stock_quantity - item.quantity)
+              await variant.save();
               await cartItem.deleteOne()
             })
           );

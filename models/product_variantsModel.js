@@ -42,6 +42,7 @@ async function updateCartItems(doc) {
                 {
                     $set: {
                         unitPrice: doc.price,
+                        quantity: { $min: ["$quantity", doc.quantity] },
                         finalPrice: { $multiply: ["$quantity", doc.price] },
                     },
                 },
