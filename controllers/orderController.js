@@ -64,7 +64,7 @@ const OrderController = {
               const product = await productModel.findById(variant.product_id)
               product.tradedCount = (product.tradedCount || 0) + item.quantity
               await product.save()
-              await variant.save();
+              await variant.save()
               await cartItem.deleteOne()
             })
           );
