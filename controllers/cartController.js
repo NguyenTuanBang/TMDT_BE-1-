@@ -660,7 +660,7 @@ const CartController = {
   addPromotion: async (req, res) => {
     try {
       const user = req.user;
-      const { promotion_id } = req.body;
+      const { promotion_id, cart_id } = req.body;
       const promo = await PromotionModel.findById(promotion_id);
       if (!promo) return res.status(404).send({ message: "Not Found" });
       const cart = await CartModel.findOne({ user: user._id });
@@ -668,7 +668,7 @@ const CartController = {
         cart.promotion = promotion_id;
         await cart.save();
       } else if (promo.scope === "store") {
-        const cartStore = await CartStoreModel.findOne({ cart_id: cart._id });
+        const cartStore = await CartStoreModel.findOne({ cart_id});
         cartStore.promotion = promotion_id;
         await cartStore.save();
       }
