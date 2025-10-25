@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import ProductModel from "../models/ProductModel.js";
+import streamifier from "streamifier";
 // import { v2 as cloudinary } from "cloudinary";
 import cloudinary from "../utils/cloudinary.js";
 import StoreModel from "../models/StoreModel.js";
@@ -53,7 +54,12 @@ const commonLookups = [
       from: "productvariants",
       let: { pvid: "$_id" },
       pipeline: [
-        { $match: { $expr: { $eq: ["$product_id", "$$pvid"] } } },
+        {
+          $match: {
+            $expr: { $eq: ["$product_id", "$$pvid"] },
+            onDeploy: true, // ✅ chỉ lấy các variant đang deploy
+          },
+        },
         {
           $lookup: {
             from: "images",
@@ -77,13 +83,19 @@ const commonLookups = [
     },
   },
 ];
-
+const streamUpload = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "products" },
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 const productController = {
-  // isRun: (req, res, next) => {
-  //   const file = req.files;
-  //   console.log(file);
-  //   next();
-  // },
   createNewProduct: async (req, res) => {
     try {
       const user = req.user;
@@ -173,7 +185,6 @@ const productController = {
     }
   },
 
-  // getAll: async (req, res) => {
   //   try {
   //     const curPage = parseInt(req.query.page) || 1;
   //     const {keyword, tag, price} = req.body;
@@ -421,6 +432,54 @@ const productController = {
       res.status(500).send({ message: "Error", error: error.message });
     }
   },
-};
+  getVariantById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const data = await ProductVariantsModel.findById(id)
+        .populate("image")
+        .populate("size");
+      if (!data) {
+        return res.status(404).send({ message: "Not Found" });
+      }
+      res.status(200).send({ message: "Success", data });
+    } catch (error) {
+      res.status(500).send({ message: "Error", error: error.message });
+    }
+  },
+  editVariant: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+      const { color, size_value, price, quantity, isDeploy } = req.body;
+      const variant = await ProductVariantsModel.findById(id);
+      const image = await ImageModel.findById(variant.image);
+      const size = await SizeModel.findById(variant.size);
+      let newImage;
+      if (file) {
+        const result = await streamUpload(file.buffer);
+        newImage = await ImageModel.create({ url: result.secure_url, color });
+      }
 
+      console.log("run");
+      if (!variant) {
+        return res.status(404).send({ message: "Not Found" });
+      }
+      if (newImage?._id) {
+        variant.image = newImage._id;
+      } else {
+        image.color = color;
+      }
+      size.size_value = size_value;
+      variant.price = price;
+      variant.quantity = quantity;
+      variant.onDeploy = isDeploy;
+      await image.save();
+      await size.save();
+      await variant.save();
+      res.status(200).send({ message: "Success", data: variant });
+    } catch (error) {
+      res.status(500).send({ message: "Error", error: error.message });
+    }
+  },
+};
 export default productController;
