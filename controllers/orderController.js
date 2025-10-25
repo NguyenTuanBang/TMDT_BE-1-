@@ -40,8 +40,10 @@ const OrderController = {
         shippingFee: cart.shippingFee,
       });
       const promotionGlobal = await ProductModel.findById(order.promotion);
-      promotionGlobal.quantity = Math.max(0, promotionGlobal.quantity - 1);
-      await promotionGlobal.save();
+      if(promotionGlobal){
+        promotionGlobal.quantity = Math.max(0, promotionGlobal.quantity - 1);
+        await promotionGlobal.save();
+      }
       // console.log(storeItems);
       await Promise.all(
         validStores.map(async ({ store, items }) => {
@@ -54,8 +56,10 @@ const OrderController = {
             finalTotal: store.finalTotal,
           });
           const promotionStore = await ProductModel.findById(store.promotion);
-          promotionStore.quantity = Math.max(0, promotionStore.quantity - 1);
-          await promotionStore.save();
+          if(promotionStore){
+            promotionStore.quantity = Math.max(0, promotionStore.quantity - 1);
+            await promotionStore.save();
+          }
           await Promise.all(
             items.map(async (item) => {
               await OrderItemModel.create({
