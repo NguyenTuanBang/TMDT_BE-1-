@@ -39,9 +39,12 @@ const OrderController = {
         promotion: cart.promotion,
         shippingFee: cart.shippingFee,
       });
+      const promotionGlobal = await ProductModel.findById(order.promotion);
+      promotionGlobal.quantity = Math.max(0, promotionGlobal.quantity - 1);
+      await promotionGlobal.save();
       // console.log(storeItems);
       await Promise.all(
-        validStores.map(async ({store, items}) => {         
+        validStores.map(async ({ store, items }) => {
           const storeOrder = await OrderStoreModel.create({
             order_id: order._id,
             store: store.store_id,
@@ -50,6 +53,9 @@ const OrderController = {
             subTotal: store.subTotal,
             finalTotal: store.finalTotal,
           });
+          const promotionStore = await ProductModel.findById(store.promotion);
+          promotionStore.quantity = Math.max(0, promotionStore.quantity - 1);
+          await promotionStore.save();
           await Promise.all(
             items.map(async (item) => {
               await OrderItemModel.create({
@@ -59,14 +65,16 @@ const OrderController = {
                 unitPrice: item.unitPrice,
                 finalPrice: item.finalPrice,
               });
-              const cartItem = await CartItemModel.findById(item._id)
-              const variant = await ProductVariantsModel.findById(item.variant_id)
-              variant.quantity = Math.max(0, variant.quantity - item.quantity)
-              const product = await ProductModel.findById(variant.product_id)
-              product.tradedCount = (product.tradedCount || 0) + item.quantity
-              await product.save()
-              await variant.save()
-              await cartItem.deleteOne()
+              const cartItem = await CartItemModel.findById(item._id);
+              const variant = await ProductVariantsModel.findById(
+                item.variant_id
+              );
+              variant.quantity = Math.max(0, variant.quantity - item.quantity);
+              const product = await ProductModel.findById(variant.product_id);
+              product.tradedCount = (product.tradedCount || 0) + item.quantity;
+              await product.save();
+              await variant.save();
+              await cartItem.deleteOne();
             })
           );
         })

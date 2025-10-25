@@ -52,6 +52,7 @@ CartStoreSchema.pre("save", function (next) {
 });
 
 CartStoreSchema.post("save", async function (doc) {
+  console.log("CartStore promotion modified:", this._promotionChanged);
   if (this._promotionChanged) {
     if (doc.promotion) {
       doc.promotionExpiresAt = new Date(Date.now() + 5 * 60 * 1000);

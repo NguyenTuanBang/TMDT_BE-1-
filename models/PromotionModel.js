@@ -5,7 +5,6 @@ const promotionSchema = new mongoose.Schema({
     store: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Store',   
-        required: true
     },
     name: { type: String, required: true },
     scope: { type: String, enum: ['store', 'global'], required: true },

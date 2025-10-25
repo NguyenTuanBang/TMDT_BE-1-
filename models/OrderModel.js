@@ -17,7 +17,11 @@ const OrderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Promotion",
     },
-    shippingFee: { type: Number }
+    shippingFee: { type: Number },
+    status: {
+        type: String,
+        enum: ["Pending",  "Cancelled", "Successful"],
+    }
 }, { timestamps: true });
 
 

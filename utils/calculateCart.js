@@ -103,6 +103,7 @@ export async function applyPromotionsToItems(cartId, storeId = null) {
         const subTotal = storeItems.reduce((sum, i) => sum + i.finalPrice + i.discountValue , 0);
         const finalTotal = storeItems.reduce((sum, i) => sum + i.finalPrice , 0);
         console.log(`🟢 Store ${store._id} - Updated subTotal:`, subTotal);
+        console.log(`🟢 Store ${store._id} - Updated finalTotal:`, finalTotal);
         store.subTotal = subTotal;
         store.finalTotal = finalTotal;
         if(subTotal === 0){
@@ -113,7 +114,7 @@ export async function applyPromotionsToItems(cartId, storeId = null) {
 
     // Cập nhật lại tổng Cart
     const updatedStores = await CartStoreModel.find({ cart_id: cartId, onDeploy: true });
-    const cartSub = updatedStores.reduce((sum, s) => sum + s.subTotal, 0);
+    const cartSub = updatedStores.reduce((sum, s) => sum + s.finalTotal, 0);
     const shippingTotal = updatedStores.reduce((sum, s) => sum + (s.shippingFee || 0), 0);
 
     console.log(`💙 Cart total - subTotal: ${cartSub}, shipping: ${shippingTotal}, finalTotal: ${cartSub + shippingTotal}`);

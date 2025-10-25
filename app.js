@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 
 import userRouter from "./routes/userRoutes.js";
 import productRouter from "./routes/product.Route.js";
+import promotionRouter from "./routes/promotionRouter.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import tagsController from './controllers/tags.Controller.js'
@@ -46,7 +47,7 @@ app.use('/api/cart', cartRouter);
 app.use('/products', productRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/createProduct', authController.protect, upload.array("variantImages"), productController.createNewProduct);
-app.use("/promotion", productRouter)
+app.use("/api/promotion", promotionRouter)
 app.get('/alltags', tagsController.getAll);
 app.get('/sixtags', tagsController.getSix);
 app.get('/testdata', authController.protect, test.getOrder)

@@ -13,6 +13,7 @@ router.post("/change", authController.protect, CartController.changeCartItemStat
 router.get('/count', authController.protect, CartController.numberOfItem)
 router.get('/preOrder', authController.protect, CartController.getPreOrderCart)
 router.post('/shippingFee', authController.protect, CartController.checkShippingFee)
+router.post('/add-promotion', authController.protect, CartController.addPromotion)
 
 export default router;
 

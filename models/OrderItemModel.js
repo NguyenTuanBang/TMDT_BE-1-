@@ -38,7 +38,7 @@ const OrderItemSchema = new mongoose.Schema({
 OrderItemSchema.post("save", async function (doc) {
   try {
     // chỉ xử lý khi item bị CANCELLED hoặc trạng thái thay đổi
-    if (doc.status !== "CANCELLED") return;
+    if (doc.status !== "CANCELLED" && doc.status !== "DELIVERED") return;
 
     const storeOrderId = doc.storeOrder;
 
@@ -47,7 +47,16 @@ OrderItemSchema.post("save", async function (doc) {
 
     // chỉ tính các item chưa CANCELLED
     const activeItems = allItems.filter(i => i.status !== "CANCELLED");
-
+    const confirmedItems = allItems.filter(i => i.status === "DELIVERED");
+    if(confirmedItems.length === activeItems.length){
+      //nếu tất cả item đã được giao thì cập nhật trạng thái của OrderStore thành Successful
+      const storeOrder = await OrderStoreModel.findById(storeOrderId);
+      if(storeOrder){
+        storeOrder.status = "Successful";
+        await storeOrder.save();
+      }
+      return;
+    }
     const subTotal = activeItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
     const finalTotal = activeItems.reduce((sum, i) => sum + i.finalPrice, 0);
     const allCancelled = activeItems.length === 0;
@@ -81,7 +90,8 @@ OrderItemSchema.post("save", async function (doc) {
     await OrderModel.findByIdAndUpdate(storeOrder.order_id, {
       total_amount,
       final_amount,
-      shippingFee: totalShipping
+      shippingFee: totalShipping,
+      status: total_amount === 0 ? "Cancelled" : undefined
     });
 
   } catch (err) {

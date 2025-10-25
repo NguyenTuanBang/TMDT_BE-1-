@@ -20,37 +20,64 @@ const PromotionController = {
     getStorePromotion: async (req, res) => {
         try {
             const user = req.user
-            const date = Date.now()
-            const cart = await CartModel.findOne({ user: user._id })
-            const cart_store = await CartStoreModel.find({ cart_id: cart._id })
-            const store = cart_store.map(item => item.store_id)
-            const data = await StoreModel.aggregate([
-                {
-                    $match: {
-                        _id: { $in: store },
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "promotions",
-                        let: { cid: "$_id" },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: { $eq: ["$store", "$$cid"] }, 
-                                    start_date: { $lte: now },
-                                    end_date: { $gte: now },
-                                    quantity: { $gt: 0 }
-                                }
-                            }],
-                        as: "promotion"
-                    }
-                },
-                {}
-            ])
+            const {storeId} = req.params
+            const date = new Date()
+            const data = await PromotionModel.find({
+                store: storeId,
+                scope: "store",
+                start_date: { $lte: date },
+                end_date: { $gte: date },
+                quantity: { $gt: 0 }
+            })
             res.status(200).send({
                 message: "Success",
                 data
+            })
+        } catch (error) {
+            res.status(500).send({
+                message: error.message
+            })
+        }
+    },
+    createPromotion: async (req, res) => {
+        try {
+            const user = req.user
+            const {
+                name,
+                description,
+                discount_type,
+                discount_value,
+                max_discount_value,
+                quantity,
+                start_date,
+                end_date,
+                scope
+            } = req.body
+            let store;
+            if (scope === "store") {
+                store = await StoreModel.findOne({user: user._id})
+                if (!store) {
+                    return res.status(400).send({
+                        message: "Store not found for this user"
+                    })
+                }
+            }
+            const promotion = await PromotionModel.create({
+                name,
+                description,
+                discount_type,
+                discount_value,
+                max_discount_value,
+                quantity,
+                start_date,
+                end_date,
+                scope,
+                store: scope === "store" ? store._id : undefined
+            })
+
+            res.status(201).send({
+                message: "Promotion created successfully",
+                promotion
             })
         } catch (error) {
             res.status(500).send({
