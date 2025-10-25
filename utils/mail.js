@@ -49,7 +49,7 @@ const sendEmail = async (options) => {
     to: options.email,
     from: {
       name: "TMDT",
-      email: process.env.Email, // domain này phải được verify trong SendGrid
+      email: process.env.EMAIL,
     },
     subject: options.subject,
     text: options.message,
