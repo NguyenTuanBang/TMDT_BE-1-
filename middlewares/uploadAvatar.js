@@ -5,7 +5,7 @@ const storage = multer.memoryStorage();
 
 // Hàm kiểm tra định dạng file
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
+  const allowedTypes = /jpeg|jpg|png|gif|webp|jfif/;
   const extname = allowedTypes.test(
     file.originalname.toLowerCase().split(".").pop()
   );
@@ -14,7 +14,7 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error("Chỉ chấp nhận file hình ảnh (.jpg, .jpeg, .png, .gif, .webp)"), false);
+    cb(new Error("Chỉ chấp nhận file hình ảnh (.jpg, .jpeg, .png, .gif, .webp, .jfif)"), false);
   }
 };
 

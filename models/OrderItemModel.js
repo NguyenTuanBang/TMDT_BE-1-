@@ -51,9 +51,10 @@ OrderItemSchema.post("save", async function (doc) {
     if(confirmedItems.length === activeItems.length){
       //nếu tất cả item đã được giao thì cập nhật trạng thái của OrderStore thành Successful
       const storeOrder = await OrderStoreModel.findById(storeOrderId);
-      if(storeOrder){
-        storeOrder.status = "Successful";
-        await storeOrder.save();
+      const order = await OrderModel.findById(storeOrder.order_id);
+      if(order){
+        order.status = "Successful";
+        await order.save();
       }
       return;
     }

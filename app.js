@@ -3,9 +3,12 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-
+// const storeRouter = require("./routes/StoreRoutes");
+import StoreRoutes from "./routes/StoreRoutes.js";
 import userRouter from "./routes/userRoutes.js";
-import productRouter from "./routes/product.Route.js";
+import productRouter from "./routes/product.Route.js"; 
+import adminRouter from "./routes/admin.Route.js"; 
+import variantRouter from "./routes/variantRoute.js"; 
 import promotionRouter from "./routes/promotionRouter.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
@@ -45,12 +48,16 @@ app.use(cookieParser());
 app.use("/api/users", userRouter);
 app.use('/api/cart', cartRouter);
 app.use('/products', productRouter);
-app.use('/api/order', orderRouter);
+app.use('/api/products', adminRouter);
+app.use('/api/variant', variantRouter);
+app.use('/api/orders', orderRouter);
 app.use('/api/createProduct', authController.protect, upload.array("variantImages"), productController.createNewProduct);
 app.use("/api/promotion", promotionRouter)
 app.get('/alltags', tagsController.getAll);
 app.get('/sixtags', tagsController.getSix);
 app.get('/testdata', authController.protect, test.getOrder)
+app.use("/api/stores", StoreRoutes);
+
 // ❌ KHÔNG cần serve thư mục local avatar nữa
 // Vì dùng Cloudinary nên phần này bỏ đi:
 // app.use("/img/avatars", express.static(path.join(__dirname, "public/img/avatars")));

@@ -65,11 +65,21 @@ productVariantsSchema.pre("save", async function (next) {
     if(this.quantity===0) this.onDeploy=false
     const cart_item = mongoose.model("CartItem")
     if(this.onDeploy===false){
-        await cart_item.find({variant_id: this._id})
-        cart_item.is_out_of_stock = true
-        cart_item.quantity = 0
-        cart_item.is_chosen = false
-        await cart_item.save()
+        const cartItems = await cart_item.find({variant_id: this._id})
+        await Promise.all(cartItems.map(async(item)=>{
+            item.is_out_of_stock = true
+            item.quantity = 0
+            item.is_chosen = false
+            await item.save()
+        }))
+    }
+    if(this.onDeploy===true){
+        const cartItems = await cart_item.find({variant_id: this._id})
+        await Promise.all(cartItems.map(async(item)=>{
+            item.is_out_of_stock = false
+            item.quantity = 1
+            await item.save()
+        }))
     }
     next()
 })

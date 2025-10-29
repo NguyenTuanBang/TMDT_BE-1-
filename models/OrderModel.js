@@ -20,7 +20,7 @@ const OrderSchema = new mongoose.Schema({
     shippingFee: { type: Number },
     status: {
         type: String,
-        enum: ["Pending",  "Cancelled", "Successful"],
+        enum: ["Pending", "Cancelled", "Successful"],
     }
 }, { timestamps: true });
 

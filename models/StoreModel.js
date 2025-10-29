@@ -10,8 +10,8 @@ const storeSchema = new mongoose.Schema({
     phone: String,
     status: { 
         type: String,
-        enum: ["Pending", "Approval", "Reject"],
-        default: "Pending"
+        enum: ["pending", "approved", "rejected"],
+        default: "pending"
     },
     citizenCode:{type: String, required: true},
     citizenImageFront : {type: String, required: true},

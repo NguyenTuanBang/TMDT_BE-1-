@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "./config.env" });
+import './utils/loadENV.js'
 import mongoose from "mongoose";
 import app from "./app.js";
 import "./utils/cron_promotion.js";

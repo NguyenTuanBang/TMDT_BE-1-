@@ -21,6 +21,10 @@ const OrderStoreSchema = new mongoose.Schema({
     },
     finalTotal:{
         type: Number
+    },
+    status: {
+        type: String,
+        enum: ["Pending", "Cancelled", "Successful"],
     }
 },{
     timestamps: true

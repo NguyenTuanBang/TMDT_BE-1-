@@ -6,6 +6,10 @@ import cloudinary from "../utils/cloudinary.js";
 
 const userController = {
   getMe: catchAsync(async (req, res, next) => {
+    await User.findByIdAndUpdate(req.user.id, {
+      lastActivity: new Date(),
+    });
+    
     const user = await User.findById(req.user.id).select("-password");
 
     res.status(200).json({
@@ -28,14 +32,14 @@ const userController = {
         "base64"
       )}`;
       const fileName = `${req.user.id}_${Date.now()}`;
-      
+
       const result = await cloudinary.uploader.upload(dataUrl, {
         public_id: fileName,
         folder: "avatars",
         resource_type: "auto",
       });
-      console.log("false")
-      console.log("true")
+      console.log("false");
+      console.log("true");
       updateData.avatar = result.secure_url;
     }
 

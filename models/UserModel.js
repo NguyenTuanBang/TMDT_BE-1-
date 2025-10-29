@@ -74,7 +74,11 @@ const userSchema = new mongoose.Schema(
     totalSpend:{
       type:Number,
       default: 0
-    }
+    },
+    lastActivity: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
