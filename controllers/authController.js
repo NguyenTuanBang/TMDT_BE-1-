@@ -1,5 +1,3 @@
-
-
 import User from "../models/UserModel.js";
 import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
@@ -108,11 +106,13 @@ const authController = {
     console.log(password);
 
     const user = await User.findOne({ username }).select("+password");
+
     console.log(user);
 
     if (!user) {
       return next(new AppError("Tên đăng nhập hoặc mật khẩu không đúng", 401));
     }
+    if (!user.isActive) return next(new AppError("Tài khoản của bạn đã bị khóa", 403));
     console.log("1");
     const isMatch = await bcrypt.compare(password, user.password);
     console.log(isMatch);

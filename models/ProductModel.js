@@ -21,14 +21,7 @@ const productSchema = new mongoose.Schema({
     timestamps: true
 });
 
-productSchema.pre('save', function(next) {
-    if (this.countRating === 0) {
-        this.rating = 0;
-    } else {
-        this.rating = this.totalRating / this.countRating;
-    }
-    next();
-});
+
 productSchema.set('toObject', { virtuals: true });
 productSchema.set('toJSON', { virtuals: true });    
 

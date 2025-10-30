@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import StoreRoutes from "./routes/StoreRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import productRouter from "./routes/product.Route.js"; 
+import reviewRouter from "./routes/reviewRoutes.js"; 
 import adminRouter from "./routes/admin.Route.js"; 
 import variantRouter from "./routes/variantRoute.js"; 
 import promotionRouter from "./routes/promotionRouter.js";
@@ -57,6 +58,7 @@ app.get('/alltags', tagsController.getAll);
 app.get('/sixtags', tagsController.getSix);
 app.get('/testdata', authController.protect, test.getOrder)
 app.use("/api/stores", StoreRoutes);
+app.use("/api/reviews", reviewRouter);
 
 // ❌ KHÔNG cần serve thư mục local avatar nữa
 // Vì dùng Cloudinary nên phần này bỏ đi:

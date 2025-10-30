@@ -30,12 +30,11 @@ const reviewSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
-    // product: {
-    //   type: mongoose.Schema.ObjectId,
-    //   ref: "Product",
-    //   required,
-    // },
+    product: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Product",
+      required: true,
+    },
   },
   {
     toJSON: { virtuals: true },
