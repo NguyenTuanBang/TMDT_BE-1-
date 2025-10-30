@@ -63,6 +63,6 @@ router
 router.patch(
   "/status",
   authController.protect,
-  userController.updateUserStatus
+  userController.updateUserStatus);
 
 export default router;
