@@ -171,7 +171,7 @@ const userController = {
       status: "success",
       data: { user },
     });
-  }),
+  })
 };
 
 export default userController;
