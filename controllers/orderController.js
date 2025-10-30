@@ -312,6 +312,18 @@ const OrderController = {
       res.status(500).json({ message: err.message });
     }
   },
-};
+  confirmOrder: async (req, res) => {
+    try {
+      const user = req.user;
+      const { orderItemId } = req.body;
+      const orderItem = await OrderItemModel.findById(orderItemId);
+      orderItem.status = "DELIVERED";
+      await orderItem.save();
+      res.status(200).json({ message: "Order confirmed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+}
 
 export default OrderController;

@@ -48,6 +48,15 @@ OrderItemSchema.post("save", async function (doc) {
     // chỉ tính các item chưa CANCELLED
     const activeItems = allItems.filter(i => i.status !== "CANCELLED");
     const confirmedItems = allItems.filter(i => i.status === "DELIVERED");
+    if(confirmedItems.length === 0){
+      await OrderModel.findByIdAndUpdate(storeOrder.order_id, {
+      total_amount: 0,
+      final_amount: 0,
+      shippingFee: 0,
+      status: "Cancelled"
+    });
+      return;
+    }
     if(confirmedItems.length === activeItems.length){
       //nếu tất cả item đã được giao thì cập nhật trạng thái của OrderStore thành Successful
       const storeOrder = await OrderStoreModel.findById(storeOrderId);
@@ -92,7 +101,6 @@ OrderItemSchema.post("save", async function (doc) {
       total_amount,
       final_amount,
       shippingFee: totalShipping,
-      status: total_amount === 0 ? "Cancelled" : undefined
     });
 
   } catch (err) {

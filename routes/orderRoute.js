@@ -8,6 +8,7 @@ const route = express.Router();
 
 route.post("/", authController.protect, OrderController.createOrder)
 route.post("/cancel", authController.protect, OrderController.cancelOrder)
+route.post("/confirm", authController.protect, OrderController.confirmOrder)
 // route.post("/", authController.protect, OrderController.createOrder);
 // route.post("/cancel", authController.protect, OrderController.cancelOrder);
 route.get("/", OrderController.getOrders);
