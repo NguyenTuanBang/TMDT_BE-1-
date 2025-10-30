@@ -44,6 +44,12 @@ const commonLookups = [
           },
         },
         { $unwind: { path: "$tag", preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            tag_id: 1,
+            tag: 1,
+          },
+        },
       ],
       as: "producttags",
     },
@@ -253,7 +259,7 @@ const productController = {
       const curPage = parseInt(req.query.page) || 1;
       const pageSize = 20;
 
-      const { keyword = "", tag = [], price = {} } = req.body || {};
+      const { keyword = "", category = [], price = {} } = req.body || {};
 
       const baseMatch = { status: "Đang bán" };
 
@@ -262,12 +268,12 @@ const productController = {
       // 🔹 Bước 1: Xây pipeline gốc
       const pipeline = [{ $match: baseMatch }, ...commonLookups];
 
-      // 🔹 Bước 2: Lọc theo tag nếu có
-      if (Array.isArray(tag) && tag.length > 0) {
-        const tagIds = tag.map((t) => new mongoose.Types.ObjectId(t));
+      // 🔹 Bước 2: Lọc theo category nếu có
+      if (Array.isArray(category) && category.length > 0) {
+        const tagIds = category.map((t) => new mongoose.Types.ObjectId(t));
         pipeline.push({
           $match: {
-            "producttags.tag._id": { $in: tagIds },
+            producttags: { $elemMatch: { tag_id: { $in: tagIds } } },
           },
         });
       }
@@ -292,6 +298,7 @@ const productController = {
           doc: { $first: "$$ROOT" },
         },
       });
+  
 
       // 🔹 Bước 5: Lọc theo keyword không dấu (nếu có)
       let data = await ProductModel.aggregate(pipeline);
@@ -305,7 +312,7 @@ const productController = {
           return productNameUnsigned.includes(keywordUnsigned);
         });
       }
-
+      console.log(pipeline);
       // 🔹 Bước 6: Tính tổng & phân trang
       const totalItems = data.length;
       const numberOfPages = Math.ceil(totalItems / pageSize);
@@ -512,17 +519,21 @@ const productController = {
       }
       const variants = await ProductVariantsModel.find({ product_id: id });
       if (status === "Ngừng bán") {
-        await Promise.all( variants.map( async (variant) => {
-          variant.onDeploy = false;
-          await variant.save();
-        } ));
-      }else if (status === "Đang bán") {
-        await Promise.all( variants.map( async (variant) => {
-          if(variant.quantity>0){
-            variant.onDeploy = true;
-          }
-          await variant.save();
-        } ));
+        await Promise.all(
+          variants.map(async (variant) => {
+            variant.onDeploy = false;
+            await variant.save();
+          })
+        );
+      } else if (status === "Đang bán") {
+        await Promise.all(
+          variants.map(async (variant) => {
+            if (variant.quantity > 0) {
+              variant.onDeploy = true;
+            }
+            await variant.save();
+          })
+        );
       }
       product.status = status;
       await product.save();
