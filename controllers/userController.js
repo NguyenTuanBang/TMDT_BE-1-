@@ -149,6 +149,29 @@ const userController = {
       data: { address },
     });
   }),
+
+  updateUserStatus: catchAsync(async (req, res, next) => {
+  const { isActive, userId } = req.body;
+
+  if (typeof isActive !== "boolean") {
+    return next(new AppError("isActive phải là boolean", 400));
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { isActive },
+    { new: true, runValidators: true }
+  ).select("-password");
+
+  if (!user) {
+    return next(new AppError("Không tìm thấy người dùng", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: { user },
+  });
+});
 };
 
 export default userController;
