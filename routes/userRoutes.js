@@ -60,4 +60,9 @@ router
   .route("/me/change-password")
   .post(authController.protect, authController.changePassword);
 
+router.patch(
+  "/status",
+  authController.protect,
+  userController.updateUserStatus);
+
 export default router;
