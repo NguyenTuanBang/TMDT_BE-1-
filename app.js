@@ -8,6 +8,7 @@ import StoreRoutes from "./routes/StoreRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import productRouter from "./routes/product.Route.js"; 
 import reviewRouter from "./routes/reviewRoutes.js"; 
+import replyRouter from "./routes/replyRoute.js"; 
 import adminRouter from "./routes/admin.Route.js"; 
 import variantRouter from "./routes/variantRoute.js"; 
 import promotionRouter from "./routes/promotionRouter.js";
@@ -46,6 +47,7 @@ app.use(cookieParser());
 
 
 // Routes
+app.use("/api/reply", replyRouter);
 app.use("/api/users", userRouter);
 app.use('/api/cart', cartRouter);
 app.use('/products', productRouter);

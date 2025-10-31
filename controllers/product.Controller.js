@@ -9,6 +9,7 @@ import ImageModel from "../models/imageModel.js";
 import SizeModel from "../models/sizeModel.js";
 import ProductTagsModel from "../models/ProductTagsModel.js";
 import removeVietnameseTones from "../utils/removeVietnameseTones.js";
+import ReplyModel from "../models/ReplyModel.js";
 const commonLookups = [
   {
     $lookup: {
@@ -298,7 +299,6 @@ const productController = {
           doc: { $first: "$$ROOT" },
         },
       });
-  
 
       // 🔹 Bước 5: Lọc theo keyword không dấu (nếu có)
       let data = await ProductModel.aggregate(pipeline);
@@ -382,19 +382,32 @@ const productController = {
   searchByName: async (req, res) => {
     try {
       const { keyword } = req.query;
-      if (!keyword)
+      if (!keyword) {
         return res.status(400).send({ message: "Keyword required" });
+      }
 
-      const regex = { $regex: keyword, $options: "i" };
-      const totalResults = await ProductModel.countDocuments({ name: regex });
+      // Làm sạch keyword (xử lý khoảng trắng, escape ký tự regex)
+      const cleanKeyword = keyword
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+      // Regex có dấu (vì MongoDB sẽ bỏ dấu khi dùng collation)
+      const regex = new RegExp(cleanKeyword, "i");
+
+      // Đếm tổng sản phẩm khớp
+      const totalResults = await ProductModel.countDocuments({
+        name: regex,
+        status: "Đang bán",
+      }).collation({ locale: "vi", strength: 1 });
+
+      // Query dữ liệu, dùng collation tiếng Việt
       const data = await ProductModel.aggregate([
         { $match: { name: regex, status: "Đang bán" } },
         { $limit: 5 },
         ...commonLookups,
         { $addFields: { mainImage: { $first: "$variants.image" } } },
         { $project: { name: 1, mainImage: 1 } },
-      ]);
+      ]).collation({ locale: "vi", strength: 1 });
 
       if (data.length === 0) {
         return res.status(200).send({ message: "Not Found", data: [] });
@@ -511,12 +524,14 @@ const productController = {
   },
   changeProductStatus: async (req, res) => {
     try {
-      const { id } = req.body;
+      const from = req.user._id;
+      const { id, message } = req.body;
       const { status } = req.body;
       const product = await ProductModel.findById(id);
       if (!product) {
         return res.status(404).send({ message: "Not Found" });
       }
+      const store = await StoreModel.findById(product.store_id);
       const variants = await ProductVariantsModel.find({ product_id: id });
       if (status === "Ngừng bán") {
         await Promise.all(
@@ -525,6 +540,17 @@ const productController = {
             await variant.save();
           })
         );
+        // const notification = {
+        //   content: `Sản phẩm của cửa hàng ${
+        //     store.name
+        //   } đã được chuyển sang trạng thái: ${status} với lý do: ${
+        //     message || "Không có lý do cụ thể"
+        //   }`,
+        //   from,
+        //   to: store.user,
+        //   about: "product",
+        // };
+        // await ReplyModel.create(notification);
       } else if (status === "Đang bán") {
         await Promise.all(
           variants.map(async (variant) => {
