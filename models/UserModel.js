@@ -15,7 +15,6 @@ const userSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      unique: true,
       required: [true, "Email không được trống"],
       lowercase: true,
       validate: [validator.isEmail, "Sai định dạng Email"],
