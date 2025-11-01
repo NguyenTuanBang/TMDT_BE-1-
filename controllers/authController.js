@@ -149,10 +149,41 @@ const authController = {
   }),
 
   getAllUsers: catchAsync(async (req, res, next) => {
-    const users = await User.find();
+  let { search, role, isActive, page = 1, limit = 5 } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const filter = {};
+
+    if (search) {
+      filter.$or = [
+        { username: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (role) filter.role = role;
+
+    if (isActive === "true") filter.isActive = true;
+    if (isActive === "false") filter.isActive = false;
+
+    const totalUsers = await User.countDocuments(filter);
+
+    const users = await User.find(filter).sort({ createdAt: -1 });
+
     res.status(200).json({
       status: "success",
-      data: { users },
+      results: users.length,
+      pagination: {
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+        limit,
+      },
+      data: {
+        users,
+      },
     });
   }),
 
