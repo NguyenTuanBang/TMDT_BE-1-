@@ -38,9 +38,7 @@ const createSendToken = (user, message, statusCode, res) => {
 const authController = {
   signup: catchAsync(async (req, res, next) => {
     const { username, email, password, passwordConfirm } = req.body;
-    const existingUser = await User.findOne({
-      $or: [{ username }, { email }],
-    });
+    const existingUser = await User.findOne({ username });
     if (existingUser) {
       return next(new AppError("Username hoặc Email đã tồn tại", 400));
     }
