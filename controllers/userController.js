@@ -68,7 +68,7 @@ const userController = {
   }),
 
   addAddress: catchAsync(async (req, res, next) => {
-    const { name, phone, province, district, ward, detail } = req.body;
+    const { name, phone, province, district, ward, detail, lat,lng } = req.body;
     const count = await Address.countDocuments({ user: req.user.id });
 
     const address = await Address.create({
@@ -80,6 +80,8 @@ const userController = {
       ward,
       detail,
       isDefault: count === 0,
+      lat,
+      lng
     });
 
     res.status(201).json({

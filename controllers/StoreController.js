@@ -23,6 +23,8 @@ const storeController = {
       citizenCode: req.body.citizenCode,
       citizenImageFront: req.files?.citizenImageFront?.[0]?.path,
       citizenImageBack: req.files?.citizenImageBack?.[0]?.path,
+      lat: req.body.lat,
+      lng: req.body.lng
     });
 
     res.status(201).json({

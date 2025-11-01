@@ -8,6 +8,8 @@ import OrderStoreModel from "../models/OrderStoreModel.js";
 import AuditLogModel from "../models/AuditLogModel.js";
 import ProductVariantsModel from "../models/product_variantsModel.js";
 import ProductModel from "../models/ProductModel.js";
+import ReplyModel from "../models/ReplyModel.js";
+import StoreModel from "../models/StoreModel.js";
 
 const OrderController = {
   // 🛒 Tạo đơn hàng
@@ -77,7 +79,9 @@ const OrderController = {
               });
 
               const cartItem = await CartItemModel.findById(item._id);
-              const variant = await ProductVariantsModel.findById(item.variant_id);
+              const variant = await ProductVariantsModel.findById(
+                item.variant_id
+              );
               variant.quantity = Math.max(0, variant.quantity - item.quantity);
               const product = await ProductModel.findById(variant.product_id);
               product.tradedCount = (product.tradedCount || 0) + item.quantity;
@@ -108,19 +112,22 @@ const OrderController = {
     try {
       const user = req.user;
       const { orderItemId } = req.body;
-      const orderItem = await OrderItemModel.findById(orderItemId);
-      orderItem.status = "CANCELLED";
-      await orderItem.save();
-
-      await AuditLogModel.create({
-        action: "update",
-        entity_id: orderItem._id,
-        entity_type: "Order",
-        changes: [
-          { field: "status", oldValue: "Pending", newValue: "Cancelled" },
-        ],
-        performedBy: user._id,
-      });
+      if (user.role === "seller") {
+        const orderItem = await OrderItemModel.findById(orderItemId).populate({
+          path: "storeOrder",
+          populate: {
+            path: "order_id", // Tên field reference bên trong storeOrder
+          },
+        });
+        orderItem.status = "CANCELLED";
+        await orderItem.save();
+      } else if (user.role === "user") {
+        const orderItem = await OrderItemModel.findById(orderItemId).populate(
+          "storeOrder"
+        );
+        orderItem.status = "CANCELLED";
+        await orderItem.save();
+      }
 
       res.status(200).send({ message: "Success" });
     } catch (error) {
@@ -161,7 +168,12 @@ const OrderController = {
                         as: "user",
                       },
                     },
-                    { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+                    {
+                      $unwind: {
+                        path: "$user",
+                        preserveNullAndEmptyArrays: true,
+                      },
+                    },
                     {
                       $project: {
                         _id: 1,
@@ -194,7 +206,12 @@ const OrderController = {
                               as: "product_id",
                             },
                           },
-                          { $unwind: { path: "$product_id", preserveNullAndEmptyArrays: true } },
+                          {
+                            $unwind: {
+                              path: "$product_id",
+                              preserveNullAndEmptyArrays: true,
+                            },
+                          },
                           {
                             $lookup: {
                               from: "images",
@@ -203,7 +220,12 @@ const OrderController = {
                               as: "image",
                             },
                           },
-                          { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+                          {
+                            $unwind: {
+                              path: "$image",
+                              preserveNullAndEmptyArrays: true,
+                            },
+                          },
                           {
                             $lookup: {
                               from: "sizes",
@@ -212,12 +234,22 @@ const OrderController = {
                               as: "size",
                             },
                           },
-                          { $unwind: { path: "$size", preserveNullAndEmptyArrays: true } },
+                          {
+                            $unwind: {
+                              path: "$size",
+                              preserveNullAndEmptyArrays: true,
+                            },
+                          },
                         ],
                         as: "variant_id",
                       },
                     },
-                    { $unwind: { path: "$variant_id", preserveNullAndEmptyArrays: true } },
+                    {
+                      $unwind: {
+                        path: "$variant_id",
+                        preserveNullAndEmptyArrays: true,
+                      },
+                    },
                   ],
                   as: "orderItem",
                 },
@@ -251,9 +283,7 @@ const OrderController = {
           $lookup: {
             from: "orderstores",
             let: { oid: "$_id" },
-            pipeline: [
-              { $match: { $expr: { $eq: ["$order_id", "$$oid"] } } },
-            ],
+            pipeline: [{ $match: { $expr: { $eq: ["$order_id", "$$oid"] } } }],
             as: "orderStore",
           },
         },
@@ -312,18 +342,31 @@ const OrderController = {
       res.status(500).json({ message: err.message });
     }
   },
-  confirmOrder: async (req, res) => {
+  deliveredOrder: async (req, res) => {
     try {
       const user = req.user;
       const { orderItemId } = req.body;
       const orderItem = await OrderItemModel.findById(orderItemId);
       orderItem.status = "DELIVERED";
       await orderItem.save();
+      res.status(200).json({ message: "Order delivered successfully" });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+  comfirmedOrder: async (req, res) => {
+    try {
+      const user = req.user;
+      const { orderItemId } = req.body;
+      const orderItem = await OrderItemModel.findById(orderItemId);
+      orderItem.status = "CONFIRMED";
+      await orderItem.save();
       res.status(200).json({ message: "Order confirmed successfully" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   },
-}
+
+};
 
 export default OrderController;

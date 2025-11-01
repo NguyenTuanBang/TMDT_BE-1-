@@ -61,7 +61,30 @@ app.get('/sixtags', tagsController.getSix);
 app.get('/testdata', authController.protect, test.getOrder)
 app.use("/api/stores", StoreRoutes);
 app.use("/api/reviews", reviewRouter);
+app.get('/api/geocode', async (req, res) => {
+  try {
+    const address = (req.query.address || '').trim();
+    if (!address) return res.status(400).json({ message: 'address is required' });
+    if (!process.env.DISTANCEMATRIX_API_KEY) {
+      return res.status(500).json({ message: 'Missing DISTANCEMATRIX_API_KEY in .env' });
+    }
+    const url = `https://api.distancematrix.ai/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.DISTANCEMATRIX_API_KEY}`;
+    const r = await fetch(url);
+    const data = await r.json();
 
+    // Sửa đoạn này: lấy data.result thay vì data.results
+    const results = data.results || data.result; // fallback cho cả 2 trường hợp
+    if (data.status !== 'OK' || !results?.length) {
+      return res.status(404).json({ message: 'Coordinates not found', raw: data });
+    }
+    const loc = results[0].geometry.location;
+    console.log('Geocoding result:', loc.lat, loc.lng);
+    return res.json({ lat: loc.lat, lng: loc.lng });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Geocoding error' });
+  }
+});
 // ❌ KHÔNG cần serve thư mục local avatar nữa
 // Vì dùng Cloudinary nên phần này bỏ đi:
 // app.use("/img/avatars", express.static(path.join(__dirname, "public/img/avatars")));
