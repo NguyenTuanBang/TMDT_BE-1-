@@ -114,18 +114,19 @@ const userController = {
   }),
 
   deleteAddress: catchAsync(async (req, res, next) => {
-    const address = await Address.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user.id,
-    });
+    const address = await Address.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { onDeploy: false },
+      { new: true }
+    );
 
     if (!address) {
       return next(new AppError("Không tìm thấy địa chỉ này", 404));
     }
 
-    res.status(204).json({
+    res.status(200).json({
       status: "success",
-      data: null,
+      data: address,
     });
   }),
 
